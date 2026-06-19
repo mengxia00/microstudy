@@ -89,7 +89,7 @@ export default function Settings({ onSaved }: SettingsProps) {
 
       {/* 设置面板 */}
       {open && (
-        <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200 space-y-4">
+        <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200 space-y-4 overflow-hidden">
           {/* API Key */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -155,12 +155,12 @@ export default function Settings({ onSaved }: SettingsProps) {
               <p className="text-sm text-red-500 mt-1">{modelsError}</p>
             )}
             {models.length > 0 && (
-              <div className="mt-2 max-h-40 overflow-auto border border-gray-200 rounded-lg">
+              <div className="mt-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg">
                 {models.map((m) => (
                   <button
                     key={m}
                     onClick={() => setModel(m)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-sm truncate hover:bg-blue-50 transition-colors ${
                       model === m ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-700"
                     }`}
                   >

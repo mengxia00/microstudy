@@ -6,7 +6,7 @@ import KnowledgeMap from "@/components/KnowledgeMap";
 import ProgressBar from "@/components/ProgressBar";
 import { LearningState, CourseData } from "@/types";
 import { loadState, getProgress } from "@/lib/stateManager";
-import { Home, BookOpen } from "lucide-react";
+import { Home, BookOpen, ArrowLeft } from "lucide-react";
 
 export default function MapPage() {
   const router = useRouter();
@@ -60,10 +60,10 @@ export default function MapPage() {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => router.push("/")}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600"
           >
-            <Home className="w-5 h-5" />
-            首页
+            <ArrowLeft className="w-4 h-4" />
+            返回
           </button>
 
           <button

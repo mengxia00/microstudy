@@ -1,6 +1,17 @@
 import { LearningState, CardState, CardStatus, CourseData, StudyMode } from "@/types";
 
 const STORAGE_KEY = "microstudy_state";
+const PROJECTS_KEY = "microstudy_projects";
+
+// 项目列表项
+export interface ProjectItem {
+  id: string;
+  title: string;
+  mode: StudyMode;
+  createdAt: string;
+  totalCards: number;
+  masteredCards: number;
+}
 
 // 生成唯一课程ID
 function generateCourseId(title: string): string {
@@ -8,10 +19,11 @@ function generateCourseId(title: string): string {
 }
 
 // 从 localStorage 读取状态
-export function loadState(): LearningState | null {
+export function loadState(projectId?: string): LearningState | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = projectId ? `${STORAGE_KEY}_${projectId}` : STORAGE_KEY;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as LearningState;
   } catch {
@@ -23,7 +35,9 @@ export function loadState(): LearningState | null {
 export function saveState(state: LearningState): void {
   if (typeof window === "undefined") return;
   try {
+    // 同时保存到通用 key 和项目专属 key
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(`${STORAGE_KEY}_${state.courseId}`, JSON.stringify(state));
   } catch (e) {
     console.error("Failed to save state:", e);
   }
@@ -136,4 +150,64 @@ export function getNextCardIndex(state: LearningState): number {
 export function clearState(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
+}
+
+// ========== 项目列表管理 ==========
+
+// 获取所有项目
+export function loadProjects(): ProjectItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PROJECTS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as ProjectItem[];
+  } catch {
+    return [];
+  }
+}
+
+// 保存项目列表
+function saveProjects(projects: ProjectItem[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+}
+
+// 添加项目
+export function addProject(state: LearningState): void {
+  const projects = loadProjects();
+  const progress = getProgress(state);
+  const item: ProjectItem = {
+    id: state.courseId,
+    title: state.courseTitle,
+    mode: state.mode,
+    createdAt: state.startedAt,
+    totalCards: progress.total,
+    masteredCards: progress.mastered,
+  };
+  // 去重
+  const filtered = projects.filter((p) => p.id !== item.id);
+  filtered.unshift(item);
+  saveProjects(filtered);
+}
+
+// 更新项目进度
+export function updateProjectProgress(state: LearningState): void {
+  const projects = loadProjects();
+  const progress = getProgress(state);
+  const idx = projects.findIndex((p) => p.id === state.courseId);
+  if (idx !== -1) {
+    projects[idx].totalCards = progress.total;
+    projects[idx].masteredCards = progress.mastered;
+    saveProjects(projects);
+  }
+}
+
+// 删除项目
+export function deleteProject(projectId: string): void {
+  const projects = loadProjects().filter((p) => p.id !== projectId);
+  saveProjects(projects);
+  // 清除对应的课程数据和状态
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(`microstudy_course_${projectId}`);
+  localStorage.removeItem(`microstudy_state_${projectId}`);
 }

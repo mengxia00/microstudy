@@ -20,8 +20,9 @@ import {
   getProgress,
   getAllCards,
   getNextCardIndex,
+  updateProjectProgress,
 } from "@/lib/stateManager";
-import { Home, Map, RotateCcw } from "lucide-react";
+import { Home, Map, RotateCcw, X, ArrowLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 export default function StudyPage() {
@@ -126,6 +127,8 @@ export default function StudyPage() {
           });
           setState(newState);
           saveState(newState);
+          updateProjectProgress(newState);
+          updateProjectProgress(newState);
 
           // 延迟切换到下一张
           setTimeout(() => {
@@ -140,6 +143,7 @@ export default function StudyPage() {
           });
           setState(newState);
           saveState(newState);
+          updateProjectProgress(newState);
         }
       } catch (err) {
         setFeedback("哎呀，出错了，请重试吧~");
@@ -167,6 +171,7 @@ export default function StudyPage() {
       const newState = { ...currentState, currentCardIndex: nextIdx };
       setState(newState);
       saveState(newState);
+      updateProjectProgress(newState);
 
       setCurrentCard({
         chapterTitle: allCards[nextIdx].chapterTitle,
@@ -231,6 +236,7 @@ export default function StudyPage() {
     };
     setState(newState);
     saveState(newState);
+    updateProjectProgress(newState);
     setCompleted(false);
     // Reload
     window.location.reload();
@@ -288,7 +294,16 @@ export default function StudyPage() {
             className="absolute inset-0 bg-black/50 lg:hidden"
             onClick={() => setShowMap(false)}
           />
-          <div className="relative h-full lg:h-auto overflow-auto p-4 bg-gray-50">
+          <div className="relative h-full lg:h-auto overflow-y-auto p-4 bg-gray-50">
+            <div className="flex items-center justify-between mb-3 lg:hidden">
+              <span className="text-sm font-medium text-gray-600">知识地图</span>
+              <button
+                onClick={() => setShowMap(false)}
+                className="p-1 rounded-lg hover:bg-gray-200 text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <KnowledgeMap
               courseData={courseData}
               cardStates={state.cardStates}
@@ -305,9 +320,10 @@ export default function StudyPage() {
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => router.push("/")}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600"
           >
-            <Home className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-4 h-4" />
+            返回
           </button>
 
           <button
