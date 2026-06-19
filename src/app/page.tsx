@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import FileUpload from "@/components/FileUpload";
 import ModeSelector from "@/components/ModeSelector";
+import Settings from "@/components/Settings";
 import { StudyMode, CourseData } from "@/types";
 import { createLearningState, saveState } from "@/lib/stateManager";
+import { apiFetch } from "@/lib/api";
 import { BookOpen, Zap } from "lucide-react";
 
 export default function HomePage() {
@@ -33,7 +35,7 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/parse", {
+      const res = await apiFetch("/api/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,6 +83,9 @@ export default function HomePage() {
 
         {/* 主卡片 */}
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 space-y-6">
+          {/* API 设置 */}
+          <Settings />
+
           {/* 文件上传 */}
           <div>
             <h2 className="text-lg font-semibold text-gray-700 mb-3">上传学习资料</h2>

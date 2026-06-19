@@ -22,6 +22,7 @@ import {
   getNextCardIndex,
 } from "@/lib/stateManager";
 import { Home, Map, RotateCcw } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 export default function StudyPage() {
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function StudyPage() {
 
       setLoading(true);
       try {
-        const res = await fetch("/api/tutor", {
+        const res = await apiFetch("/api/tutor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

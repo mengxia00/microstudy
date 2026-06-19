@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import getClient, { MODEL } from "@/lib/openai";
+import OpenAI from "openai";
 import { TutorRequest, TutorResponse } from "@/types";
+
+// 从请求头或环境变量获取配置
+function getClientFromReq(req: NextRequest): { client: OpenAI; model: string } {
+  const headerKey = req.headers.get("x-api-key");
+  const headerBase = req.headers.get("x-api-base");
+  const headerModel = req.headers.get("x-api-model");
+
+  const apiKey = headerKey || process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("缺少 API Key，请在设置中配置");
+  }
+
+  const client = new OpenAI({
+    apiKey,
+    baseURL: headerBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+  });
+
+  const model = headerModel || process.env.OPENAI_MODEL || "gpt-4o-mini";
+  return { client, model };
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const { client, model } = getClientFromReq(req);
+
     const body: TutorRequest = await req.json();
     const { cardId, userAnswer, history, action, question } = body;
 
@@ -63,9 +85,8 @@ export async function POST(req: NextRequest) {
 
     messages.push({ role: "user", content: userMessage });
 
-    const openai = getClient();
-    const response = await openai.chat.completions.create({
-      model: MODEL,
+    const response = await client.chat.completions.create({
+      model,
       messages,
       temperature: 0.5,
       max_tokens: 300,
