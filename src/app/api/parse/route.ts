@@ -101,15 +101,32 @@ ${modeInstruction}${examInfo}
         { role: "user", content: `请整理以下学习资料：\n\n${content}` },
       ],
       temperature: 0.3,
-      response_format: { type: "json_object" },
     });
 
-    const result = response.choices[0]?.message?.content;
-    if (!result) {
+    const raw = response.choices[0]?.message?.content;
+    if (!raw) {
       return NextResponse.json({ error: "AI 解析失败，请重试" }, { status: 500 });
     }
 
-    const courseData: CourseData = JSON.parse(result);
+    // 提取 JSON（兼容 markdown 代码块包裹的情况）
+    let jsonStr = raw.trim();
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim();
+    }
+    // 如果开头不是 {，尝试找到第一个 {
+    if (!jsonStr.startsWith("{")) {
+      const idx = jsonStr.indexOf("{");
+      if (idx !== -1) jsonStr = jsonStr.slice(idx);
+    }
+
+    let courseData: CourseData;
+    try {
+      courseData = JSON.parse(jsonStr);
+    } catch {
+      console.error("JSON parse failed, raw:", raw);
+      return NextResponse.json({ error: "AI 返回格式异常，请重试" }, { status: 500 });
+    }
 
     // 基本验证
     if (!courseData.courseTitle || !Array.isArray(courseData.chapters)) {

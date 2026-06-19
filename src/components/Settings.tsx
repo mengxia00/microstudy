@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Eye, EyeOff } from "lucide-react";
+import { Settings as SettingsIcon, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { loadSettings, saveSettings, ApiSettings } from "@/lib/settings";
+import { apiFetch } from "@/lib/api";
 
 interface SettingsProps {
   onSaved?: () => void;
@@ -15,6 +16,11 @@ export default function Settings({ onSaved }: SettingsProps) {
   const [model, setModel] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // 模型列表
+  const [models, setModels] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
 
   useEffect(() => {
     const s = loadSettings();
@@ -33,6 +39,35 @@ export default function Settings({ onSaved }: SettingsProps) {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     onSaved?.();
+  };
+
+  // 获取模型列表
+  const handleFetchModels = async () => {
+    // 先保存当前设置
+    handleSave();
+
+    setLoadingModels(true);
+    setModelsError(null);
+    setModels([]);
+
+    try {
+      const res = await apiFetch("/api/models");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "获取失败");
+      }
+
+      setModels(data.models || []);
+      if (data.models?.length === 0) {
+        setModelsError("没有找到可用模型");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "获取模型列表失败";
+      setModelsError(message);
+    } finally {
+      setLoadingModels(false);
+    }
   };
 
   const hasKey = apiKey.trim().length > 0;
@@ -97,13 +132,43 @@ export default function Settings({ onSaved }: SettingsProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               模型
             </label>
-            <input
-              type="text"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder="gpt-4o-mini"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="gpt-4o-mini"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              />
+              <button
+                onClick={handleFetchModels}
+                disabled={!apiKey.trim() || loadingModels}
+                className="px-3 py-2 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 text-sm whitespace-nowrap"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingModels ? "animate-spin" : ""}`} />
+                获取模型
+              </button>
+            </div>
+
+            {/* 模型列表 */}
+            {modelsError && (
+              <p className="text-sm text-red-500 mt-1">{modelsError}</p>
+            )}
+            {models.length > 0 && (
+              <div className="mt-2 max-h-40 overflow-auto border border-gray-200 rounded-lg">
+                {models.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setModel(m)}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                      model === m ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-700"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 保存按钮 */}
