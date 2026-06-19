@@ -11,16 +11,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "缺少 API Key" }, { status: 400 });
     }
 
-    const client = new OpenAI({
-      apiKey,
-      baseURL: headerBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-    });
+    const baseURL = headerBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+
+    const client = new OpenAI({ apiKey, baseURL });
 
     const models = await client.models.list();
-    const modelIds = models.data
-      .map((m) => m.id)
-      .filter((id) => id.includes("gpt") || id.includes("o1") || id.includes("o3") || id.includes("claude"))
-      .sort();
+    const modelIds = models.data.map((m) => m.id).sort();
 
     return NextResponse.json({ models: modelIds });
   } catch (error: unknown) {
