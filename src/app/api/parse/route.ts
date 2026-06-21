@@ -46,26 +46,20 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `你是一个考试复习资料整理助手。
 
-用户会上传课程资料，其中可能存在 PDF 转 Word 错误。
+核心原则：严格忠实于用户原始资料，不要编造、不要拓展、不要补充资料中没有的内容。这是紧急复习，不是拓展学习。
 
 请你：
 1. 按章节整理知识结构；
 2. 提取适合考试复习的知识点；
 3. 每个知识点拆成"一次只学一点"的微卡片；
-4. 标注类型：definition / list / comparison / formula / process / example / qa / mistake；
+4. 识别原始资料中的题型，原样保留：
+   - 选择题：保留题目和所有选项（A/B/C/D...），标注正确答案
+   - 填空题：保留题目，用 ___ 标记空格位置
+   - 判断题：保留题目，标注对/错
+   - 简答题/论述题：保留原问题
 5. 标注优先级 high / medium / low；
-6. 修正明显 OCR 错误，但不要编造资料中没有依据的内容；
+6. 修正明显 OCR/转码错误，但不改变原意；
 7. 输出 JSON。
-
-注意：
-- 定义类卡片：给出完整定义 + 关键词
-- 列表类卡片：给出完整列表 + 口诀
-- 对比类卡片：给出对比表格
-- 流程类卡片：按步骤列出
-- 每张卡片尽量控制在 50 字以内
-- question 字段：出一道检验理解的简答题
-- answer 字段：标准答案
-- commonMistakes 字段：常见错误
 
 ${modeInstruction}${examInfo}
 
@@ -81,18 +75,31 @@ ${modeInstruction}${examInfo}
         {
           "id": "ch1-p1",
           "title": "知识点标题",
-          "type": "definition",
-          "priority": "high",
-          "content": "知识点内容",
+          "type": "definition | list | comparison | formula | process | example | mcq | fill | judge | qa",
+          "priority": "high|medium|low",
+          "content": "知识点内容（完整保留原文）",
           "keywords": ["关键词1", "关键词2"],
-          "question": "检验理解的问题",
-          "answer": "标准答案",
-          "commonMistakes": ["常见错误1"]
+          "originalQuestion": "如果是题型（选择/填空/判断），这里是原始题目，没有则为空",
+          "options": ["A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"],
+          "correctAnswer": "如果是题型，这里是正确答案",
+          "explanation": "选择题/判断题的答案解析（简要说明为什么选这个），没有则为空"
         }
       ]
     }
   ]
-}`;
+}
+
+type 字段说明：
+- definition：定义
+- list：列表/条目
+- comparison：对比
+- formula：公式
+- process：流程/步骤
+- example：案例
+- mcq：选择题（必须保留原始选项）
+- fill：填空题（空格用 ___ 表示）
+- judge：判断题
+- qa：简答/论述题`;
 
     const response = await client.chat.completions.create({
       model,

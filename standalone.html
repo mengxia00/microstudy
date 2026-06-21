@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MicroStudy — 一次只学一点</title>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh;padding:16px}
+.container{max-width:640px;margin:0 auto}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);padding:24px;margin-bottom:16px;border:1px solid #f1f5f9}
+h1{font-size:2rem;font-weight:800;text-align:center;margin-bottom:4px}
+.subtitle{text-align:center;color:#94a3b8;margin-bottom:24px;font-size:1rem}
+h2{font-size:1rem;font-weight:600;margin-bottom:12px;color:#475569}
+.btn{padding:12px 24px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#3b82f6;color:#fff;width:100%;justify-content:center;padding:14px}
+.btn-primary:hover{background:#2563eb}
+.btn-primary:disabled{background:#cbd5e1;cursor:not-allowed}
+.btn-outline{background:#f8fafc;border:1.5px solid #e2e8f0;color:#475569}
+.btn-outline:hover{background:#f1f5f9}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px}
+.upload-zone{border:2px dashed #cbd5e1;border-radius:16px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .15s}
+.upload-zone:hover{border-color:#3b82f6;background:#f8fafc}
+.upload-zone.dragging{border-color:#3b82f6;background:#eff6ff}
+.upload-zone .icon{font-size:48px;margin-bottom:12px}
+.upload-zone p{color:#64748b;font-size:14px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode-btn{padding:14px;border-radius:12px;border:2px solid #e2e8f0;background:#fff;text-align:left;cursor:pointer;transition:all .15s}
+.mode-btn.active{border-color:#3b82f6;background:#eff6ff}
+.mode-btn .mode-title{font-weight:600;font-size:14px;color:#1e293b}
+.mode-btn .mode-desc{font-size:12px;color:#94a3b8;margin-top:4px}
+input[type="date"],input[type="text"],input[type="password"]{width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;outline:none;transition:border-color .15s}
+input:focus{border-color:#3b82f6}
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:#3b82f6;border-radius:3px;transition:width .3s}
+.flash-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);padding:24px;border:1px solid #f1f5f9}
+.flash-card .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;color:#94a3b8}
+.flash-card .card-title{font-size:1.25rem;font-weight:700;margin-bottom:12px;color:#1e293b}
+.flash-card .card-content{background:#eff6ff;border-radius:12px;padding:16px;margin-bottom:12px;line-height:1.7;color:#334155}
+.keywords{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.keywords span{padding:4px 12px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:13px}
+.question-box{padding-top:12px;border-top:1px solid #f1f5f9;font-size:14px;color:#64748b}
+.question-box strong{color:#1e293b}
+textarea{width:100%;padding:14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;resize:none;outline:none;font-family:inherit;min-height:80px;transition:border-color .15s}
+textarea:focus{border-color:#3b82f6}
+.input-row{position:relative}
+.send-btn{position:absolute;right:10px;bottom:10px;width:40px;height:40px;border-radius:10px;border:none;background:#3b82f6;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+.send-btn:hover{background:#2563eb}
+.send-btn:disabled{background:#cbd5e1}
+.action-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.feedback{border-radius:12px;padding:14px;margin-top:12px;line-height:1.6;font-size:14px}
+.feedback.correct{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.feedback.wrong{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.feedback.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.feedback.loading{background:#f8fafc;border:1px solid #e2e8f0;color:#64748b}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+.nav-row button{padding:8px 16px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:13px;color:#475569;transition:all .15s}
+.nav-row button:hover{background:#f1f5f9}
+.nav-row button:disabled{opacity:.3;cursor:not-allowed}
+.nav-row .page-num{font-size:13px;color:#94a3b8}
+.project-item{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #f1f5f9;border-radius:12px;margin-bottom:10px;transition:all .15s}
+.project-item:hover{border-color:#e2e8f0;background:#fafbfc}
+.project-info{flex:1;min-width:0}
+.project-info h3{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-info .meta{font-size:12px;color:#94a3b8;margin-top:2px}
+.project-info .mini-bar{height:4px;background:#e2e8f0;border-radius:2px;margin-top:6px;overflow:hidden}
+.project-info .mini-fill{height:100%;background:#3b82f6;border-radius:2px}
+.project-actions{display:flex;gap:6px;flex-shrink:0}
+.empty{text-align:center;padding:32px;color:#94a3b8;font-size:14px}
+.settings-panel{margin-bottom:16px}
+.settings-toggle{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:13px;color:#475569;transition:all .15s}
+.settings-toggle.has-key{border-color:#86efac;background:#f0fdf4;color:#166534}
+.settings-toggle.no-key{border-color:#fca5a5;background:#fef2f2;color:#991b1b}
+.settings-body{margin-top:12px;padding:16px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0}
+.model-list{max-height:140px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-top:8px}
+.model-list button{display:block;width:100%;text-align:left;padding:8px 12px;border:none;background:none;cursor:pointer;font-size:13px;color:#334155;transition:background .1s}
+.model-list button:hover{background:#eff6ff}
+.model-list button.selected{background:#dbeafe;color:#1d4ed8;font-weight:600}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.back-btn{display:flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:13px;color:#64748b;transition:background .15s}
+.back-btn:hover{background:#f1f5f9}
+.spacer{height:100px}
+@media(max-width:480px){body{padding:10px}.card,.flash-card{padding:18px}h1{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+// ========== 状态管理 ==========
+const STORAGE_KEY = "ms_state";
+const PROJECTS_KEY = "ms_projects";
+const SETTINGS_KEY = "ms_settings";
+const COURSE_KEY = "ms_course";
+
+function loadJSON(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function saveJSON(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+function loadSettings() { return loadJSON(SETTINGS_KEY) || { apiKey: "", baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini" }; }
+function saveSettings(s) { saveJSON(SETTINGS_KEY, s); }
+function loadProjects() { return loadJSON(PROJECTS_KEY) || []; }
+function saveProjects(p) { saveJSON(PROJECTS_KEY, p); }
+function loadState() { return loadJSON(STORAGE_KEY); }
+function saveState(s) { saveJSON(STORAGE_KEY, s); }
+function loadCourse() { return loadJSON(COURSE_KEY); }
+function saveCourse(c) { saveJSON(COURSE_KEY, c); }
+
+function addProject(state) {
+  const projects = loadProjects();
+  const mastered = Object.values(state.cardStates).filter(c => c.status === "mastered").length;
+  const total = Object.keys(state.cardStates).length;
+  const wrongCount = (state.wrongCardIds || []).length;
+  const item = { id: state.courseId, title: state.courseTitle, mode: state.mode, createdAt: state.startedAt, total, mastered, wrongCount };
+  const filtered = projects.filter(p => p.id !== item.id);
+  filtered.unshift(item);
+  saveProjects(filtered);
+}
+function updateProjectProgress(state) {
+  const projects = loadProjects();
+  const mastered = Object.values(state.cardStates).filter(c => c.status === "mastered").length;
+  const total = Object.keys(state.cardStates).length;
+  const wrongCount = (state.wrongCardIds || []).length;
+  const idx = projects.findIndex(p => p.id === state.courseId);
+  if (idx !== -1) { projects[idx].total = total; projects[idx].mastered = mastered; projects[idx].wrongCount = wrongCount; saveProjects(projects); }
+}
+function deleteProject(id) {
+  saveProjects(loadProjects().filter(p => p.id !== id));
+}
+function renameProject(id, newTitle) {
+  const projects = loadProjects();
+  const idx = projects.findIndex(p => p.id === id);
+  if (idx !== -1) { projects[idx].title = newTitle; saveProjects(projects); }
+}
+function addWrongCard(cardId) {
+  if (!state) return;
+  if (!state.wrongCardIds) state.wrongCardIds = [];
+  if (!state.wrongCardIds.includes(cardId)) state.wrongCardIds.push(cardId);
+}
+function removeWrongCard(cardId) {
+  if (!state) return;
+  state.wrongCardIds = (state.wrongCardIds || []).filter(id => id !== cardId);
+}
+function getWrongCards() {
+  if (!state || !courseData) return [];
+  const wrongIds = new Set(state.wrongCardIds || []);
+  return getAllCards(courseData).filter(c => wrongIds.has(c.point.id));
+}
+
+// ========== API ==========
+function getApiConfig() {
+  const s = loadSettings();
+  const baseUrl = (s.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+  return { apiKey: s.apiKey, baseUrl, model: s.model || "gpt-4o-mini" };
+}
+async function callOpenAI(systemPrompt, userMessage, opts = {}) {
+  const { apiKey, baseUrl, model } = getApiConfig();
+  if (!apiKey) throw new Error("缺少 API Key，请在设置中配置");
+  const res = await fetch(baseUrl + "/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
+    body: JSON.stringify({ model, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userMessage }], temperature: opts.temperature ?? 0.3, max_tokens: opts.max_tokens })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || data.error || "API 请求失败");
+  return data.choices[0]?.message?.content || "";
+}
+function extractJSON(raw) {
+  let s = raw.trim();
+  const m = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (m) s = m[1].trim();
+  if (!s.startsWith("{")) { const i = s.indexOf("{"); if (i !== -1) s = s.slice(i); }
+  return JSON.parse(s);
+}
+
+// ========== 工具 ==========
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+const modeLabels = { exam_cram: "考前速成", normal: "正常复习", key_only: "只背重点", random: "抽题模式" };
+function getAllCards(course) {
+  const cards = [];
+  for (const ch of course.chapters) for (const p of ch.points) cards.push({ chapterTitle: ch.title, point: p });
+  return cards;
+}
+
+// ========== 渲染 ==========
+const app = document.getElementById("app");
+let currentPage = "home";
+let state = null;
+let courseData = null;
+let currentCard = null;
+let feedback = "";
+let correct = null;
+let loading = false;
+let chatHistory = [];
+let showMap = false;
+let reviewMode = "recite"; // recite | quiz
+let allHidden = false;
+let hiddenCards = new Set();
+let selectedIdx = null;
+let wrongPractice = false;
+let wrongCardsList = [];
+
+function render() {
+  if (currentPage === "home") renderHome();
+  else if (currentPage === "study") renderStudy();
+  app.querySelector(".spacer") || app.insertAdjacentHTML("beforeend", '<div class="spacer"></div>');
+}
+
+// ========== 首页 ==========
+function renderHome() {
+  const projects = loadProjects();
+  const settings = loadSettings();
+  app.innerHTML = `
+    <div class="card" style="text-align:center;margin-top:24px">
+      <h1>📚 MicroStudy</h1>
+      <p class="subtitle">一次只学一点</p>
+    </div>
+    <div class="card">
+      <div class="settings-panel">
+        <button class="settings-toggle ${settings.apiKey ? 'has-key' : 'no-key'}" onclick="toggleSettings()">
+          ⚙️ ${settings.apiKey ? 'API 已配置' : '配置 API Key'}
+        </button>
+        <div id="settings-body" style="display:none" class="settings-body">
+          <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px">API Key</label>
+          <input type="password" id="inp-key" value="${settings.apiKey}" placeholder="sk-..." style="margin-bottom:10px">
+          <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px">API 地址（中转站）</label>
+          <input type="text" id="inp-base" value="${settings.baseUrl}" placeholder="https://api.openai.com/v1" style="margin-bottom:10px">
+          <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px">模型</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="inp-model" value="${settings.model}" placeholder="gpt-4o-mini" style="flex:1">
+            <button class="btn btn-sm btn-outline" onclick="fetchModels()" style="white-space:nowrap">获取模型</button>
+          </div>
+          <div id="model-list"></div>
+          <button class="btn btn-sm" style="background:#3b82f6;color:#fff;width:100%;margin-top:10px" onclick="saveSettingsUI()">保存设置</button>
+          <p style="font-size:11px;color:#94a3b8;margin-top:8px">设置保存在浏览器本地，不会上传到服务器。</p>
+        </div>
+      </div>
+      <h2>上传学习资料</h2>
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📄</div>
+        <p id="upload-text">拖拽或点击上传学习资料</p>
+        <p style="font-size:12px;color:#94a3b8">支持 .md / .txt / .docx 格式</p>
+      </div>
+      <input type="file" id="file-input" accept=".md,.txt,.docx" style="display:none">
+      <h2 style="margin-top:16px">考试时间（可选）</h2>
+      <input type="date" id="inp-date" style="margin-bottom:16px">
+      <h2>学习模式</h2>
+      <div class="mode-grid" style="margin-bottom:16px">
+        <div class="mode-btn active" data-mode="normal" onclick="selectMode(this)"><div class="mode-title">正常复习</div><div class="mode-desc">全面复习，按重要性排序</div></div>
+        <div class="mode-btn" data-mode="exam_cram" onclick="selectMode(this)"><div class="mode-title">考前速成</div><div class="mode-desc">只看高频考点，快速过一遍</div></div>
+        <div class="mode-btn" data-mode="key_only" onclick="selectMode(this)"><div class="mode-title">只背重点</div><div class="mode-desc">核心定义、公式、必考列表</div></div>
+        <div class="mode-btn" data-mode="random" onclick="selectMode(this)"><div class="mode-title">抽题模式</div><div class="mode-desc">随机抽查，检验理解程度</div></div>
+      </div>
+      <div id="error-msg" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px;color:#991b1b;margin-bottom:12px"></div>
+      <button class="btn btn-primary" id="start-btn" onclick="startStudy()" disabled>🚀 开始学习</button>
+    </div>
+    ${projects.length > 0 ? `
+    <div class="card">
+      <h2>📁 知识库 (${projects.length})</h2>
+      <div id="project-list">
+        ${projects.map(p => {
+          const pct = p.total > 0 ? Math.round(p.mastered / p.total * 100) : 0;
+          return `<div class="project-item">
+            <div class="project-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <h3 id="title-${p.id}">${esc(p.title)}</h3>
+                <button onclick="startRename('${p.id}')" style="border:none;background:none;cursor:pointer;font-size:12px;color:#94a3b8" title="重命名">✏️</button>
+              </div>
+              <div class="meta">${modeLabels[p.mode] || p.mode} · ${p.mastered}/${p.total} 已掌握</div>
+              <div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div class="project-actions">
+              <button class="btn btn-sm" style="background:#3b82f6;color:#fff" onclick="continueProject('${p.id}')">▶</button>
+              <button class="btn btn-sm btn-outline" onclick="removeProject('${p.id}')">✕</button>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>` : ""}
+    ${projects.filter(p => (p.wrongCount || 0) > 0).length > 0 ? `
+    <div class="card">
+      <h2>⚠️ 错题库 (${projects.filter(p => (p.wrongCount || 0) > 0).reduce((s, p) => s + (p.wrongCount || 0), 0)} 题)</h2>
+      ${projects.filter(p => (p.wrongCount || 0) > 0).map(p => `
+        <div class="project-item" style="border-color:#fed7aa">
+          <div class="project-info">
+            <h3>${esc(p.title)}</h3>
+            <div class="meta" style="color:#ea580c;font-weight:500">${p.wrongCount} 题待复习</div>
+          </div>
+          <button class="btn btn-sm" style="background:#ea580c;color:#fff" onclick="enterWrongPractice('${p.id}')">重刷错题</button>
+        </div>
+      `).join('')}
+    </div>` : ""}
+  `;
+  setupFileUpload();
+}
+
+function esc(s) { return s ? s.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : ""; }
+function toggleSettings() { const b = document.getElementById("settings-body"); b.style.display = b.style.display === "none" ? "block" : "none"; }
+function saveSettingsUI() {
+  saveSettings({ apiKey: document.getElementById("inp-key").value.trim(), baseUrl: document.getElementById("inp-base").value.trim() || "https://api.openai.com/v1", model: document.getElementById("inp-model").value.trim() || "gpt-4o-mini" });
+  renderHome();
+}
+async function fetchModels() {
+  const s = loadSettings(); saveSettingsUI();
+  const list = document.getElementById("model-list");
+  list.innerHTML = '<p style="font-size:12px;color:#64748b;margin-top:8px">加载中...</p>';
+  try {
+    const baseUrl = (s.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const res = await fetch(baseUrl + "/models", {
+      headers: { "Authorization": "Bearer " + s.apiKey }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.error || "获取失败");
+    const models = (data.data || []).map(m => m.id).sort();
+    if (!models.length) { list.innerHTML = '<p style="font-size:12px;color:#991b1b;margin-top:8px">没有找到可用模型</p>'; return; }
+    list.innerHTML = '<div class="model-list">' + models.map(m => `<button onclick="selectModel('${esc(m)}')" class="${m === s.model ? 'selected' : ''}">${esc(m)}</button>`).join("") + '</div>';
+  } catch (e) { list.innerHTML = `<p style="font-size:12px;color:#991b1b;margin-top:8px">${esc(e.message)}</p>`; }
+}
+function selectModel(m) { document.getElementById("inp-model").value = m; document.querySelectorAll(".model-list button").forEach(b => b.classList.toggle("selected", b.textContent === m)); }
+function selectMode(el) { document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); }
+let fileContent = null;
+function setupFileUpload() {
+  const zone = document.getElementById("drop-zone");
+  const inp = document.getElementById("file-input");
+  zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("dragging"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("dragging"));
+  zone.addEventListener("drop", e => { e.preventDefault(); zone.classList.remove("dragging"); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+  inp.addEventListener("change", e => { if (e.target.files[0]) readFile(e.target.files[0]); });
+}
+async function readFile(file) {
+  const ext = "." + file.name.split(".").pop().toLowerCase();
+  document.getElementById("upload-text").textContent = "解析中...";
+  try {
+    if (ext === ".docx") {
+      if (typeof mammoth === "undefined") { alert("Word 解析库加载失败，请刷新重试"); return; }
+      const buf = await file.arrayBuffer();
+      const res = await mammoth.extractRawText({ arrayBuffer: buf });
+      fileContent = res.value;
+    } else if (ext === ".md" || ext === ".txt") {
+      fileContent = await file.text();
+    } else { alert("支持的格式：.md / .txt / .docx"); return; }
+    if (!fileContent?.trim()) { alert("文件内容为空"); return; }
+    document.getElementById("upload-text").innerHTML = `✅ <strong>${esc(file.name)}</strong><br><span style="font-size:12px;color:#94a3b8">点击重新选择</span>`;
+    document.getElementById("start-btn").disabled = false;
+  } catch (e) { alert("文件解析失败: " + e.message); document.getElementById("upload-text").textContent = "拖拽或点击上传学习资料"; }
+}
+
+async function startStudy() {
+  if (!fileContent) return;
+  const mode = document.querySelector(".mode-btn.active").dataset.mode;
+  const examDate = document.getElementById("inp-date").value;
+  const btn = document.getElementById("start-btn");
+  const errDiv = document.getElementById("error-msg");
+  btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite"></span> AI 正在解析...';
+  errDiv.style.display = "none";
+  const modeInstructions = { exam_cram: "考前速成模式：只提取最高频考点，每个知识点尽量精简。", normal: "正常复习模式：全面提取知识点，按重要性排序。", key_only: "只背重点模式：只提取核心定义、关键公式、必考列表。", random: "抽题模式：提取适合随机抽查的知识点，偏重理解和应用。" };
+  const modeInstruction = modeInstructions[mode] || modeInstructions.normal;
+  const examInfo = examDate ? "\n考试时间：" + examDate + "，请根据紧迫程度调整优先级。" : "";
+  const systemPrompt = `你是一个考试复习资料整理助手。\n\n核心原则：严格忠实于用户原始资料，不要编造、不要拓展、不要补充资料中没有的内容。这是紧急复习，不是拓展学习。\n\n请你：\n1. 按章节整理知识结构；\n2. 提取适合考试复习的知识点；\n3. 每个知识点拆成"一次只学一点"的微卡片；\n4. 识别原始资料中的题型，原样保留：\n   - 选择题：保留题目和所有选项（A/B/C/D...），标注正确答案\n   - 填空题：保留题目，用 ___ 标记空格位置\n   - 判断题：保留题目，标注对/错\n   - 简答题/论述题：保留原问题\n5. 标注优先级 high / medium / low；\n6. 修正明显 OCR/转码错误，但不改变原意；\n7. 输出 JSON。\n\n${modeInstruction}${examInfo}\n\n输出格式（严格 JSON）：\n{"courseTitle":"课程名称","chapters":[{"id":"ch1","title":"章节标题","priority":"high|medium|low","points":[{"id":"ch1-p1","title":"知识点标题","type":"definition | list | comparison | formula | process | example | mcq | fill | judge | qa","priority":"high|medium|low","content":"知识点内容（完整保留原文）","keywords":["关键词1","关键词2"],"originalQuestion":"如果是题型，这里是原始题目，没有则为空","options":["A. 选项1","B. 选项2","C. 选项3","D. 选项4"],"correctAnswer":"如果是题型，这里是正确答案","explanation":"选择题/判断题的答案解析，没有则为空"}]}]}\n\ntype 字段说明：definition=定义, list=列表, comparison=对比, formula=公式, process=流程, example=案例, mcq=选择题, fill=填空题, judge=判断题, qa=简答题`;
+  try {
+    const raw = await callOpenAI(systemPrompt, "请整理以下学习资料：\n\n" + fileContent);
+    courseData = extractJSON(raw);
+    if (!courseData.courseTitle || !Array.isArray(courseData.chapters)) throw new Error("AI 返回格式异常，请重试");
+    const cs = {};
+    for (const ch of courseData.chapters) for (const p of ch.points) cs[p.id] = { status: "unlearned", attempts: 0, lastAnswer: "", mistakes: [], mastery: 0 };
+    state = { courseId: genId(), courseTitle: courseData.courseTitle, cardStates: cs, currentCardIndex: 0, totalCards: Object.keys(cs).length, startedAt: new Date().toISOString(), mode, wrongCardIds: [] };
+    saveState(state); saveCourse(courseData); addProject(state);
+    currentPage = "study"; showMap = false; feedback = ""; correct = null; chatHistory = [];
+    reviewMode = "recite"; allHidden = false; hiddenCards = new Set(); selectedIdx = null; wrongPractice = false;
+    const all = getAllCards(courseData);
+    currentCard = all[0];
+    render();
+  } catch (e) { errDiv.textContent = e.message; errDiv.style.display = "block"; }
+  btn.disabled = false; btn.innerHTML = "🚀 开始学习";
+}
+
+function continueProject(id) {
+  const s = loadState();
+  const c = loadCourse();
+  if (s && c && s.courseId === id) {
+    state = s; courseData = c;
+    currentPage = "study"; showMap = false; feedback = ""; correct = null; chatHistory = [];
+    reviewMode = "recite"; allHidden = false; hiddenCards = new Set(); selectedIdx = null; wrongPractice = false;
+    const all = getAllCards(c);
+    currentCard = all[s.currentCardIndex] || all[0];
+    render();
+  } else { alert("该项目数据不在当前会话，请先重新上传"); }
+}
+function removeProject(id) { if (confirm("确定删除？")) { deleteProject(id); renderHome(); } }
+function startRename(id) {
+  const el = document.getElementById('title-' + id);
+  if (!el) return;
+  const oldTitle = el.textContent;
+  el.innerHTML = `<input id="rename-${id}" value="${esc(oldTitle)}" style="width:120px;padding:2px 6px;border:1.5px solid #3b82f6;border-radius:6px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){confirmRename('${id}')}if(event.key==='Escape'){renderHome()}">`;
+  document.getElementById('rename-' + id).focus();
+  document.getElementById('rename-' + id).select();
+}
+function confirmRename(id) {
+  const inp = document.getElementById('rename-' + id);
+  if (inp && inp.value.trim()) { renameProject(id, inp.value.trim()); }
+  renderHome();
+}
+
+// ========== 复习页 ==========
+function renderStudy() {
+  if (!state || !courseData || !currentCard) { renderHome(); return; }
+  const total = wrongPractice ? wrongCardsList.length : Object.keys(state.cardStates).length;
+  const mastered = Object.values(state.cardStates).filter(c => c.status === "mastered").length;
+  const learning = Object.values(state.cardStates).filter(c => c.status === "learning").length;
+  const needsReview = Object.values(state.cardStates).filter(c => c.status === "needs_review").length;
+  const pct = total > 0 ? Math.round((mastered + learning) / total * 100) : 0;
+  const cardState = state.cardStates[currentCard.point.id];
+  const p = currentCard.point;
+  const isMCQ = p.type === "mcq";
+  const isRecite = reviewMode === "recite";
+  const cardHidden = hiddenCards.has(p.id);
+  const answerHidden = allHidden !== cardHidden;
+  const correctLetter = (p.correctAnswer || "").trim().toUpperCase();
+
+  // 导航编号
+  let navLabel, navPrevDisabled, navNextDisabled;
+  if (wrongPractice) {
+    const wIdx = wrongCardsList.findIndex(c => c.point.id === p.id);
+    navLabel = `错题 ${wIdx + 1} / ${wrongCardsList.length}`;
+    navPrevDisabled = true;
+    navNextDisabled = true;
+  } else {
+    navLabel = `${state.currentCardIndex + 1} / ${state.totalCards}`;
+    navPrevDisabled = state.currentCardIndex <= 0;
+    navNextDisabled = state.currentCardIndex >= state.totalCards - 1;
+  }
+
+  app.innerHTML = `
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">← 返回</button>
+      <div style="display:flex;gap:8px">
+        ${isRecite ? `<button class="btn btn-sm btn-outline" onclick="toggleAllHidden()" style="font-size:12px">${allHidden ? '👁 显示' : '🙈 隐藏'}答案</button>` : ''}
+        <button class="btn btn-sm btn-outline" onclick="toggleMap()">🗺️ 知识地图</button>
+      </div>
+    </div>
+    ${wrongPractice ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa"><span style="font-size:13px;font-weight:600;color:#9a3412">⚠️ 错题练习模式 (${wrongCardsList.length} 题)</span><button onclick="exitWrongPractice()" style="border:none;background:none;color:#9a3412;text-decoration:underline;cursor:pointer;font-size:13px">退出</button></div>` : ''}
+    <div style="font-size:13px;color:#64748b;margin-bottom:4px">进度 ${mastered + learning} / ${total}</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;gap:12px;font-size:12px;color:#94a3b8;margin-bottom:12px">
+      <span>🟢 已掌握 ${mastered}</span><span>🟡 学习中 ${learning}</span><span>🔴 需复习 ${needsReview}</span>
+    </div>
+    <!-- 模式切换 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="switchMode('recite')" style="flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600;${isRecite ? 'background:#3b82f6;color:#fff' : 'background:#f1f5f9;color:#64748b'}">📖 背诵模式</button>
+      <button onclick="switchMode('quiz')" style="flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600;${!isRecite ? 'background:#3b82f6;color:#fff' : 'background:#f1f5f9;color:#64748b'}">✏️ 刷题模式</button>
+    </div>
+    ${!isRecite && !isMCQ ? `<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-sm" style="background:#f3e8ff;color:#7c3aed;width:100%" onclick="doConvert('mcq')" ${loading ? 'disabled' : ''}>转选择题</button><button class="btn btn-sm" style="background:#fef3c7;color:#b45309;width:100%" onclick="doConvert('fill')" ${loading ? 'disabled' : ''}>转填空题</button></div>` : ''}
+    <div class="flash-card">
+      <div class="card-header">
+        <span>${getTypeLabel(p.type)} · ${esc(currentCard.chapterTitle)}</span>
+        <span>${navLabel}</span>
+      </div>
+      <div class="card-title">${esc(p.title)}</div>
+      ${p.originalQuestion ? `<div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:12px;margin-bottom:12px;font-weight:500;color:#713f12">${esc(p.originalQuestion)}</div>` : ''}
+      ${isMCQ && isRecite && p.options ? renderMCQRecite(p, correctLetter) : ''}
+      ${isMCQ && !isRecite && p.options ? renderMCQQuiz(p, correctLetter) : ''}
+      ${!isMCQ ? `<div class="card-content" style="position:relative"><button onclick="toggleCardHidden('${p.id}')" style="position:absolute;top:8px;right:8px;border:none;background:none;cursor:pointer;font-size:16px" title="${answerHidden ? '显示答案' : '隐藏答案'}">${answerHidden ? '👁' : '🙈'}</button>${answerHidden ? '<span style="color:#94a3b8;font-style:italic;font-size:13px">点击图标查看答案</span>' : esc(displayContent(p))}</div>` : ''}
+      ${!isMCQ && isRecite && p.type === 'fill' ? '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#92400e">填空题 — 请在心中默念答案，然后复述</div>' : ''}
+      ${!isMCQ && isRecite && p.type === 'judge' ? '<div style="background:#f3e8ff;border:1px solid #d8b4fe;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#6b21a8">判断题 — 请判断对错并说明理由</div>' : ''}
+      ${p.keywords?.length ? `<div class="keywords">${p.keywords.map(k => `<span>${esc(k)}</span>`).join("")}</div>` : ""}
+    </div>
+    <div class="nav-row">
+      <button onclick="prevCard()" ${navPrevDisabled ? "disabled" : ""}>← 上一题</button>
+      <span class="page-num">${navLabel}</span>
+      <button onclick="nextCard()" ${navNextDisabled ? "disabled" : ""}>下一题 →</button>
+    </div>
+    <div id="feedback-area">${feedback ? `<div class="feedback ${correct === true ? 'correct' : correct === false ? 'wrong' : 'info'}">${esc(feedback)}</div>` : ""}</div>
+    <div style="margin-top:12px">
+      <div class="input-row">
+        <textarea id="answer-input" placeholder="请复述这个知识点..." rows="3" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAnswer()}"></textarea>
+        <button class="send-btn" id="send-btn" onclick="submitAnswer()" ${loading ? "disabled" : ""}>↑</button>
+      </div>
+      <div class="action-btns">
+        <button class="btn btn-sm btn-outline" onclick="doAction('hint')" ${loading ? "disabled" : ""}>💡 提示</button>
+        <button class="btn btn-sm btn-outline" onclick="doAction('simplify')" ${loading ? "disabled" : ""}>✂️ 太多了</button>
+        <button class="btn btn-sm btn-outline" onclick="doAction('ask')" ${loading ? "disabled" : ""}>❓ 我想问</button>
+      </div>
+    </div>
+    ${showMap ? `<div style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5)" onclick="showMap=false;render()">
+      <div style="position:absolute;right:0;top:0;bottom:0;width:300px;background:#f8fafc;padding:16px;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong>知识地图</strong><button onclick="showMap=false;render()" style="border:none;background:none;cursor:pointer;font-size:18px">✕</button></div>
+        ${renderMapInner()}
+      </div>
+    </div>` : ""}
+  `;
+}
+
+function displayContent(p) {
+  return (p.content || '').replace(/正确答案[：:].*/g, '').replace(/答案[：:].*/g, '').replace(/正确选项[：:].*/g, '').trim();
+}
+function getTypeLabel(t) {
+  return { definition:'定义',list:'列表',comparison:'对比',formula:'公式',process:'流程',example:'案例',qa:'简答',mcq:'选择题',fill:'填空题',judge:'判断题' }[t] || t;
+}
+function renderMCQRecite(p, correctLetter) {
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">${p.options.map(opt => {
+    const letter = opt.charAt(0).toUpperCase();
+    const isCorrect = letter === correctLetter;
+    return `<div style="display:flex;align-items:start;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid ${isCorrect ? '#86efac' : '#e2e8f0'};background:${isCorrect ? '#f0fdf4' : '#f8fafc'};${isCorrect ? '' : 'opacity:.6'}">
+      <span style="font-weight:600;color:${isCorrect ? '#16a34a' : '#94a3b8'};flex-shrink:0">${letter}.</span>
+      <span style="color:${isCorrect ? '#166534' : '#64748b'};${isCorrect ? 'font-weight:500' : ''}">${esc(opt.slice(3))}</span>
+      ${isCorrect ? '<span style="margin-left:auto;flex-shrink:0;color:#16a34a">✓</span>' : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+function renderMCQQuiz(p, correctLetter) {
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">${p.options.map((opt, i) => {
+    const letter = opt.charAt(0).toUpperCase();
+    const isSelected = selectedIdx === i;
+    const isCorrect = letter === correctLetter;
+    const showResult = selectedIdx !== null;
+    let border = '#e2e8f0', bg = '#fff';
+    if (showResult) { if (isCorrect) { border = '#86efac'; bg = '#f0fdf4'; } else if (isSelected) { border = '#fca5a5'; bg = '#fef2f2'; } else { bg = '#f8fafc'; } }
+    return `<button onclick="selectMCQOption(${i})" ${showResult ? 'disabled' : ''} style="display:flex;align-items:start;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid ${border};background:${bg};cursor:${showResult ? 'not-allowed' : 'pointer'};text-align:left;width:100%;font-size:14px;${showResult && !isCorrect && !isSelected ? 'opacity:.5' : ''}">
+      <span style="font-weight:600;color:#94a3b8;flex-shrink:0">${letter}.</span>
+      <span style="color:#334155;flex:1">${esc(opt.slice(3))}</span>
+      ${showResult && isCorrect ? '<span style="color:#16a34a;flex-shrink:0">✓</span>' : ''}
+      ${showResult && isSelected && !isCorrect ? '<span style="color:#dc2626;flex-shrink:0">✗</span>' : ''}
+    </button>`;
+  }).join('')}</div>
+  ${selectedIdx !== null && p.explanation ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:4px">解析</div><div style="font-size:13px;color:#334155;line-height:1.6">${esc(p.explanation)}</div></div>` : ''}`;
+}
+
+function renderMapInner() {
+  if (!courseData) return "";
+  return courseData.chapters.map(ch => {
+    const points = ch.points.map(p => {
+      const s = state.cardStates[p.id]?.status || "unlearned";
+      const emoji = s === "mastered" ? "🟢" : s === "learning" ? "🟡" : s === "needs_review" ? "🔴" : "🔵";
+      const isCurrent = currentCard?.point.id === p.id;
+      return `<button onclick="jumpToCard('${p.id}')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px;border-radius:8px;border:none;background:${isCurrent ? '#dbeafe' : 'none'};cursor:pointer;font-size:13px">${emoji} ${esc(p.title)}</button>`;
+    }).join("");
+    return `<div style="margin-bottom:8px"><div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#475569">${esc(ch.title)}</div>${points}</div>`;
+  }).join("");
+}
+
+function goHome() { currentPage = "home"; wrongPractice = false; render(); }
+function toggleMap() { showMap = !showMap; render(); }
+function switchMode(mode) { reviewMode = mode; selectedIdx = null; render(); }
+function toggleAllHidden() { allHidden = !allHidden; render(); }
+function toggleCardHidden(id) {
+  if (hiddenCards.has(id)) hiddenCards.delete(id); else hiddenCards.add(id);
+  render();
+}
+function selectMCQOption(i) {
+  if (selectedIdx !== null) return;
+  selectedIdx = i;
+  const p = currentCard.point;
+  const correctLetter = (p.correctAnswer || '').trim().toUpperCase();
+  const letter = p.options[i].charAt(0).toUpperCase();
+  const isCorrect = letter === correctLetter;
+  if (isCorrect) {
+    removeWrongCard(p.id);
+    state.cardStates[p.id] = { ...state.cardStates[p.id], status: 'mastered', attempts: (state.cardStates[p.id]?.attempts || 0) + 1, mastery: 1 };
+  } else {
+    addWrongCard(p.id);
+    state.cardStates[p.id] = { ...state.cardStates[p.id], status: 'learning', attempts: (state.cardStates[p.id]?.attempts || 0) + 1 };
+  }
+  saveState(state); updateProjectProgress(state);
+  render();
+  if (isCorrect) setTimeout(() => { selectedIdx = null; autoNext(); }, 1200);
+}
+function autoNext() {
+  if (wrongPractice) {
+    const unmastered = wrongCardsList.filter(c => state.cardStates[c.point.id]?.status !== 'mastered');
+    if (unmastered.length === 0) { alert('🎉 错题全部攻克！'); goHome(); return; }
+    currentCard = unmastered[0];
+  } else {
+    const all = getAllCards(courseData);
+    let next = -1;
+    for (let i = 0; i < all.length; i++) { const s = state.cardStates[all[i].point.id]?.status; if (s === 'needs_review' || s === 'unlearned' || s === 'learning') { next = i; break; } }
+    if (next === -1) { alert('🎉 全部完成！'); goHome(); return; }
+    state.currentCardIndex = next; currentCard = all[next];
+  }
+  feedback = ''; correct = null; chatHistory = []; selectedIdx = null;
+  saveState(state); render();
+}
+function exitWrongPractice() { wrongPractice = false; goHome(); }
+function enterWrongPractice(projectId) {
+  const sRaw = localStorage.getItem(STORAGE_KEY);
+  const cRaw = localStorage.getItem(COURSE_KEY);
+  if (sRaw && cRaw) {
+    const s = JSON.parse(sRaw); const c = JSON.parse(cRaw);
+    if (s.courseId === projectId) {
+      state = s; courseData = c;
+      wrongCardsList = getWrongCards();
+      if (wrongCardsList.length === 0) { alert('没有错题了！'); return; }
+      wrongPractice = true; currentCard = wrongCardsList[0];
+      currentPage = 'study'; feedback = ''; correct = null; chatHistory = []; selectedIdx = null; reviewMode = 'recite';
+      render();
+    } else { alert('请先切换到该项目'); }
+  }
+}
+async function doConvert(targetType) {
+  if (!currentCard || loading) return;
+  await doAction(targetType === 'mcq' ? 'convert_choice' : 'convert_fill', '');
+}
+
+function jumpToCard(id) {
+  const all = getAllCards(courseData);
+  const idx = all.findIndex(c => c.point.id === id);
+  if (idx === -1) return;
+  state.currentCardIndex = idx; currentCard = all[idx];
+  feedback = ""; correct = null; chatHistory = []; showMap = false;
+  saveState(state); render();
+}
+function prevCard() {
+  if (wrongPractice) return;
+  if (state.currentCardIndex <= 0) return;
+  state.currentCardIndex--;
+  currentCard = getAllCards(courseData)[state.currentCardIndex];
+  feedback = ""; correct = null; chatHistory = []; selectedIdx = null;
+  saveState(state); render();
+}
+function nextCard() {
+  if (wrongPractice) return;
+  const all = getAllCards(courseData);
+  if (state.currentCardIndex >= all.length - 1) return;
+  state.currentCardIndex++;
+  currentCard = all[state.currentCardIndex];
+  feedback = ""; correct = null; chatHistory = []; selectedIdx = null;
+  saveState(state); render();
+}
+
+async function submitAnswer() {
+  const inp = document.getElementById("answer-input");
+  const answer = inp?.value?.trim();
+  if (!answer || loading) return;
+  await doAction("submit", answer);
+}
+async function doAction(action, answer) {
+  if (loading) return;
+  if (action === "ask") {
+    const q = prompt("输入你的问题：");
+    if (!q) return;
+    answer = q;
+  }
+  loading = true; feedback = ""; correct = null; render();
+  try {
+    const tutorPrompt = `你是一个 ADHD 友好的 AI 复习教练。\n\n你的任务是根据用户上传的课程资料，帮助用户进行考前复习。\n\n核心规则：\n1. 每次只讲一个知识点。\n2. 每次回复不超过 100 字。\n3. 不要一次性列出大量内容。\n4. 用户复述后，判断是否正确。\n5. 如果正确，说"对，过"，然后给出下一个小点。\n6. 如果错误，只指出 1-2 个关键错误，并给出标准表达。\n7. 不使用 emoji。\n8. 用户说"停""太多了""等一下"时，立即停止扩展。\n9. 用户可以随时提问，先简短回答，再问是否继续。\n10. 根据资料优先级，优先讲解高频考点。\n11. 如果资料有 OCR 错误，先纠正再讲解。\n12. 目标是帮助用户建立结构认知，而不是把资料全文总结给用户。\n\n当前卡片 ID：${currentCard.point.id}\n用户操作：${action}`;
+
+    let userMessage = "";
+    if (action === "submit") userMessage = "我的复述：" + answer;
+    else if (action === "hint") userMessage = "请给我一个提示。";
+    else if (action === "simplify") userMessage = "太多了，请简化。";
+    else if (action === "ask") userMessage = answer || "我有问题。";
+    else if (action === "convert_choice") {
+      const info = { title: currentCard.point.title, content: currentCard.point.content, keywords: currentCard.point.keywords };
+      userMessage = `请将以下知识点转换为一道选择题（4个选项，标注正确答案），严格基于原始内容：\n\n标题：${info.title}\n内容：${info.content}\n关键词：${(info.keywords || []).join("、")}\n\n请严格按以下JSON格式输出，不要输出其他内容：\n{"content":"题目内容","options":["A. 选项1","B. 选项2","C. 选项3","D. 选项4"],"correctAnswer":"A"}`;
+    } else if (action === "convert_fill") {
+      const info = { title: currentCard.point.title, content: currentCard.point.content, keywords: currentCard.point.keywords };
+      userMessage = `请将以下知识点转换为填空题，用 ___ 标记需要填写的位置，严格基于原始内容：\n\n标题：${info.title}\n内容：${info.content}\n关键词：${(info.keywords || []).join("、")}\n\n请严格按以下JSON格式输出，不要输出其他内容：\n{"content":"带___的填空题内容","correctAnswer":"正确答案（填写的内容）"}`;
+    }
+
+    const aiReply = await callOpenAI(tutorPrompt, userMessage, { temperature: 0.5, max_tokens: 300 });
+    const isCorrect = /对[，,。]|正确|没错|过[。]/.test(aiReply);
+
+    feedback = aiReply; correct = isCorrect;
+    chatHistory.push({ role: "user", content: answer || `[${action}]` }, { role: "assistant", content: aiReply });
+
+    // 如果是转换操作，尝试解析返回的 JSON
+    if (action === "convert_choice" || action === "convert_fill") {
+      try {
+        const parsed = extractJSON(aiReply);
+        currentCard = { ...currentCard, point: { ...currentCard.point, type: action === "convert_choice" ? "mcq" : "fill", content: parsed.content || aiReply, options: parsed.options, correctAnswer: parsed.correctAnswer || "" } };
+        feedback = ""; selectedIdx = null;
+      } catch { /* JSON 解析失败，直接显示原文 */ }
+    } else if (isCorrect) {
+      removeWrongCard(currentCard.point.id);
+      state.cardStates[currentCard.point.id] = { ...state.cardStates[currentCard.point.id], status: "mastered", attempts: (state.cardStates[currentCard.point.id]?.attempts || 0) + 1, lastAnswer: answer, mastery: 1 };
+      saveState(state); updateProjectProgress(state);
+      render();
+      setTimeout(() => autoNext(), 1500);
+    } else {
+      addWrongCard(currentCard.point.id);
+      state.cardStates[currentCard.point.id] = { ...state.cardStates[currentCard.point.id], status: "learning", attempts: (state.cardStates[currentCard.point.id]?.attempts || 0) + 1, lastAnswer: answer };
+      saveState(state); updateProjectProgress(state);
+    }
+  } catch (e) { feedback = "哎呀，出错了，请重试吧~"; correct = null; }
+  loading = false; render();
+}
+
+// ========== 启动 ==========
+const style = document.createElement("style");
+style.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+document.head.appendChild(style);
+render();
+</script>
+</body>
+</html>

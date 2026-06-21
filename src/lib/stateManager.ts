@@ -11,6 +11,7 @@ export interface ProjectItem {
   createdAt: string;
   totalCards: number;
   masteredCards: number;
+  wrongCount: number;
 }
 
 // 生成唯一课程ID
@@ -183,6 +184,7 @@ export function addProject(state: LearningState): void {
     createdAt: state.startedAt,
     totalCards: progress.total,
     masteredCards: progress.mastered,
+    wrongCount: (state.wrongCardIds || []).length,
   };
   // 去重
   const filtered = projects.filter((p) => p.id !== item.id);
@@ -198,6 +200,17 @@ export function updateProjectProgress(state: LearningState): void {
   if (idx !== -1) {
     projects[idx].totalCards = progress.total;
     projects[idx].masteredCards = progress.mastered;
+    projects[idx].wrongCount = (state.wrongCardIds || []).length;
+    saveProjects(projects);
+  }
+}
+
+// 重命名项目
+export function renameProject(projectId: string, newTitle: string): void {
+  const projects = loadProjects();
+  const idx = projects.findIndex((p) => p.id === projectId);
+  if (idx !== -1) {
+    projects[idx].title = newTitle;
     saveProjects(projects);
   }
 }
@@ -210,4 +223,29 @@ export function deleteProject(projectId: string): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(`microstudy_course_${projectId}`);
   localStorage.removeItem(`microstudy_state_${projectId}`);
+}
+
+// ========== 错题管理 ==========
+
+// 添加错题
+export function addWrongCard(state: LearningState, cardId: string): LearningState {
+  const wrongCardIds = state.wrongCardIds || [];
+  if (wrongCardIds.includes(cardId)) return state;
+  return { ...state, wrongCardIds: [...wrongCardIds, cardId] };
+}
+
+// 移除错题（答对时调用）
+export function removeWrongCard(state: LearningState, cardId: string): LearningState {
+  const wrongCardIds = (state.wrongCardIds || []).filter((id) => id !== cardId);
+  return { ...state, wrongCardIds };
+}
+
+// 获取错题卡片列表
+export function getWrongCards(
+  state: LearningState,
+  courseData: CourseData
+): { chapterId: string; chapterTitle: string; point: import("@/types").KnowledgePoint }[] {
+  const wrongIds = new Set(state.wrongCardIds || []);
+  const allCards = getAllCards(courseData);
+  return allCards.filter((card) => wrongIds.has(card.point.id));
 }

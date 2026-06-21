@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Send, Lightbulb, Minimize2, HelpCircle } from "lucide-react";
 
 interface AnswerInputProps {
@@ -23,12 +23,7 @@ export default function AnswerInput({
   const [question, setQuestion] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 自动聚焦
-  useEffect(() => {
-    if (!disabled) {
-      textareaRef.current?.focus();
-    }
-  }, [disabled]);
+  // 不自动聚焦，避免手机端自动弹出键盘
 
   const handleSubmit = () => {
     if (answer.trim() && !disabled) {

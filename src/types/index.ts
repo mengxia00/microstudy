@@ -7,7 +7,9 @@ export type CardType =
   | "process"
   | "example"
   | "qa"
-  | "mistake";
+  | "mcq"    // 选择题
+  | "fill"   // 填空题
+  | "judge"; // 判断题
 
 // 优先级
 export type Priority = "high" | "medium" | "low";
@@ -18,6 +20,9 @@ export type CardStatus = "unlearned" | "learning" | "mastered" | "needs_review";
 // 学习模式
 export type StudyMode = "exam_cram" | "normal" | "key_only" | "random";
 
+// 复习模式
+export type ReviewMode = "recite" | "quiz"; // 背诵模式 / 刷题模式
+
 // 单个知识点
 export interface KnowledgePoint {
   id: string;
@@ -26,9 +31,10 @@ export interface KnowledgePoint {
   priority: Priority;
   content: string;
   keywords: string[];
-  question: string;
-  answer: string;
-  commonMistakes: string[];
+  originalQuestion?: string;   // 原始题目（选择/填空/判断/简答）
+  options?: string[];          // 选择题选项
+  correctAnswer?: string;      // 正确答案
+  explanation?: string;        // 解析（选择/判断题的答案解析）
 }
 
 // 章节
@@ -64,6 +70,7 @@ export interface LearningState {
   totalCards: number;
   startedAt: string;
   mode: StudyMode;
+  wrongCardIds?: string[];  // 错题卡片ID列表
 }
 
 // Tutor API 请求
@@ -71,7 +78,7 @@ export interface TutorRequest {
   cardId: string;
   userAnswer: string;
   history: { role: "assistant" | "user"; content: string }[];
-  action: "submit" | "hint" | "simplify" | "ask";
+  action: "submit" | "hint" | "simplify" | "ask" | "convert_choice" | "convert_fill";
   question?: string;
 }
 
@@ -82,6 +89,12 @@ export interface TutorResponse {
   correct: boolean;
   nextCard: string;
   progress: { current: number; total: number };
+  convertedCard?: {
+    type: "mcq" | "fill";
+    content: string;
+    options?: string[];
+    correctAnswer: string;
+  };
 }
 
 // Parse API 请求

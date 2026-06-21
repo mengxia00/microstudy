@@ -12,11 +12,12 @@ import {
   loadProjects,
   addProject,
   deleteProject,
+  renameProject,
   ProjectItem,
   getProgress,
 } from "@/lib/stateManager";
 import { apiFetch } from "@/lib/api";
-import { BookOpen, Zap, Trash2, Play, FolderOpen } from "lucide-react";
+import { BookOpen, Zap, Trash2, Play, FolderOpen, Pencil, Check, X, AlertTriangle } from "lucide-react";
 
 const modeLabels: Record<StudyMode, string> = {
   exam_cram: "考前速成",
@@ -34,6 +35,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   useEffect(() => {
     setProjects(loadProjects());
@@ -104,11 +107,45 @@ export default function HomePage() {
     }
   };
 
+  const handleStartRename = (project: ProjectItem) => {
+    setRenamingId(project.id);
+    setRenameValue(project.title);
+  };
+
+  const handleConfirmRename = () => {
+    if (renamingId && renameValue.trim()) {
+      renameProject(renamingId, renameValue.trim());
+      setProjects(loadProjects());
+    }
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const handleCancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
   const handleDeleteProject = (projectId: string) => {
     if (!confirm("确定删除这个项目吗？")) return;
     deleteProject(projectId);
     setProjects(loadProjects());
   };
+
+  const handleWrongPractice = (project: ProjectItem) => {
+    // 加载该项目的状态和课程数据
+    const stateRaw = localStorage.getItem(`microstudy_state_${project.id}`);
+    const courseRaw = localStorage.getItem(`microstudy_course_${project.id}`);
+    if (stateRaw && courseRaw) {
+      localStorage.setItem("microstudy_state", stateRaw);
+      localStorage.setItem("microstudy_course", courseRaw);
+      router.push("/study?wrong=true");
+    } else {
+      alert("项目数据丢失，请重新上传");
+    }
+  };
+
+  const projectsWithWrong = projects.filter((p) => (p.wrongCount || 0) > 0);
 
   return (
     <main className="flex-1 p-4">
@@ -194,9 +231,38 @@ export default function HomePage() {
                 >
                   {/* 信息区 */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 truncate">
-                      {project.title}
-                    </h3>
+                    {renamingId === project.id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleConfirmRename();
+                            if (e.key === "Escape") handleCancelRename();
+                          }}
+                          className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        />
+                        <button onClick={handleConfirmRename} className="p-1 text-green-500 hover:text-green-600">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={handleCancelRename} className="p-1 text-gray-400 hover:text-gray-600">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-medium text-gray-800 truncate">
+                          {project.title}
+                        </h3>
+                        <button
+                          onClick={() => handleStartRename(project)}
+                          className="p-0.5 text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                       <span>{modeLabels[project.mode]}</span>
                       <span>
@@ -229,6 +295,45 @@ export default function HomePage() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 错题库 */}
+        {projectsWithWrong.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              <h2 className="text-lg font-semibold text-gray-700">错题库</h2>
+              <span className="text-sm text-gray-400">
+                ({projectsWithWrong.reduce((sum, p) => sum + (p.wrongCount || 0), 0)} 题)
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {projectsWithWrong.map((project) => (
+                <div
+                  key={project.id}
+                  className="bg-white rounded-xl border border-orange-100 shadow-sm p-4 flex items-center gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-800 truncate">
+                      {project.title}
+                    </h3>
+                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                      <span className="text-orange-500 font-medium">
+                        {project.wrongCount} 题待复习
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleWrongPractice(project)}
+                    className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors flex-shrink-0"
+                  >
+                    重刷错题
+                  </button>
                 </div>
               ))}
             </div>

@@ -81,6 +81,36 @@ export async function POST(req: NextRequest) {
       case "ask":
         userMessage = question || "我有问题。";
         break;
+      case "convert_choice":
+        try {
+          const info = JSON.parse(question || "{}");
+          userMessage = `请将以下知识点转换为一道选择题（4个选项，标注正确答案），严格基于原始内容，不要拓展：
+
+标题：${info.title}
+内容：${info.content}
+关键词：${info.keywords?.join("、")}
+
+请严格按以下JSON格式输出，不要输出其他内容：
+{"content":"题目内容","options":["A. 选项1","B. 选项2","C. 选项3","D. 选项4"],"correctAnswer":"A"}`;
+        } catch {
+          userMessage = "请将这个知识点转换为选择题";
+        }
+        break;
+      case "convert_fill":
+        try {
+          const info = JSON.parse(question || "{}");
+          userMessage = `请将以下知识点转换为填空题，用 ___ 标记需要填写的位置，严格基于原始内容：
+
+标题：${info.title}
+内容：${info.content}
+关键词：${info.keywords?.join("、")}
+
+请严格按以下JSON格式输出，不要输出其他内容：
+{"content":"带___的填空题内容","correctAnswer":"正确答案（填写的内容）"}`;
+        } catch {
+          userMessage = "请将这个知识点转换为填空题";
+        }
+        break;
     }
 
     messages.push({ role: "user", content: userMessage });
@@ -101,9 +131,34 @@ export async function POST(req: NextRequest) {
       feedback: aiReply,
       standardAnswer: "",
       correct,
-      nextCard: cardId, // 前端根据 correct 决定是否切换
-      progress: { current: 0, total: 0 }, // 前端自己计算
+      nextCard: cardId,
+      progress: { current: 0, total: 0 },
     };
+
+    // 如果是转换操作，尝试解析返回的 JSON
+    if (action === "convert_choice" || action === "convert_fill") {
+      try {
+        // 提取 JSON（兼容 markdown 代码块）
+        let jsonStr = aiReply.trim();
+        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) jsonStr = jsonMatch[1].trim();
+        if (!jsonStr.startsWith("{")) {
+          const idx = jsonStr.indexOf("{");
+          if (idx !== -1) jsonStr = jsonStr.slice(idx);
+        }
+        const parsed = JSON.parse(jsonStr);
+        result.convertedCard = {
+          type: action === "convert_choice" ? "mcq" : "fill",
+          content: parsed.content || aiReply,
+          options: parsed.options,
+          correctAnswer: parsed.correctAnswer || "",
+        };
+        result.feedback = "";
+      } catch {
+        // JSON 解析失败，直接显示原文
+        result.feedback = aiReply;
+      }
+    }
 
     return NextResponse.json(result);
   } catch (error: unknown) {
