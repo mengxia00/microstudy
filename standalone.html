@@ -501,7 +501,7 @@ function renderMCQRecite(p, correctLetter) {
     const isCorrect = letter === correctLetter;
     return `<div style="display:flex;align-items:start;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid ${isCorrect ? '#86efac' : '#e2e8f0'};background:${isCorrect ? '#f0fdf4' : '#f8fafc'};${isCorrect ? '' : 'opacity:.6'}">
       <span style="font-weight:600;color:${isCorrect ? '#16a34a' : '#94a3b8'};flex-shrink:0">${letter}.</span>
-      <span style="color:${isCorrect ? '#166534' : '#64748b'};${isCorrect ? 'font-weight:500' : ''}">${esc(opt.slice(3))}</span>
+      <span style="color:${isCorrect ? '#166534' : '#64748b'};${isCorrect ? 'font-weight:500' : ''}">${esc(opt.replace(/^[A-Z]\.\s*/, ''))}</span>
       ${isCorrect ? '<span style="margin-left:auto;flex-shrink:0;color:#16a34a">✓</span>' : ''}
     </div>`;
   }).join('')}</div>`;
@@ -516,7 +516,7 @@ function renderMCQQuiz(p, correctLetter) {
     if (showResult) { if (isCorrect) { border = '#86efac'; bg = '#f0fdf4'; } else if (isSelected) { border = '#fca5a5'; bg = '#fef2f2'; } else { bg = '#f8fafc'; } }
     return `<button onclick="selectMCQOption(${i})" ${showResult ? 'disabled' : ''} style="display:flex;align-items:start;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid ${border};background:${bg};cursor:${showResult ? 'not-allowed' : 'pointer'};text-align:left;width:100%;font-size:14px;${showResult && !isCorrect && !isSelected ? 'opacity:.5' : ''}">
       <span style="font-weight:600;color:#94a3b8;flex-shrink:0">${letter}.</span>
-      <span style="color:#334155;flex:1">${esc(opt.slice(3))}</span>
+      <span style="color:#334155;flex:1">${esc(opt.replace(/^[A-Z]\.\s*/, ''))}</span>
       ${showResult && isCorrect ? '<span style="color:#16a34a;flex-shrink:0">✓</span>' : ''}
       ${showResult && isSelected && !isCorrect ? '<span style="color:#dc2626;flex-shrink:0">✗</span>' : ''}
     </button>`;

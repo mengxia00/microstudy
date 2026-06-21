@@ -118,7 +118,7 @@ export default function FlashCard({
                       {letter}.
                     </span>
                     <span className={isCorrect ? "text-green-700 font-medium" : "text-gray-600"}>
-                      {opt.slice(3)}
+                      {opt.replace(/^[A-Z]\.\s*/, '')}
                     </span>
                     {isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500 ml-auto flex-shrink-0 mt-0.5" />
@@ -158,7 +158,7 @@ export default function FlashCard({
                     className={`w-full flex items-start gap-2 p-3 rounded-lg border ${borderColor} ${bgColor} transition-all text-left disabled:cursor-not-allowed`}
                   >
                     <span className="text-gray-500 font-medium flex-shrink-0">{letter}.</span>
-                    <span className="text-gray-700">{opt.slice(3)}</span>
+                    <span className="text-gray-700">{opt.replace(/^[A-Z]\.\s*/, '')}</span>
                     {showResult && isCorrect && (
                       <CheckCircle className="w-5 h-5 text-green-500 ml-auto flex-shrink-0 mt-0.5" />
                     )}
